@@ -1,0 +1,116 @@
+.fileTree {
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.treeItem {
+  display: flex;
+  align-items: center;
+  padding: 1px 12px 1px 0;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  position: relative;
+  height: 26px;
+}
+
+.treeItem:hover {
+  background: var(--bg-hover);
+}
+
+.treeItem.active {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.treeItem.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--purple-accent);
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.chevron.open {
+  transform: rotate(90deg);
+}
+
+.chevronHidden {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  visibility: hidden;
+}
+
+.chevron svg {
+  width: 9px;
+  height: 9px;
+}
+
+.fileIcon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.fileName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+
+.modifiedDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--yellow-accent);
+  margin-right: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px rgba(255, 189, 46, 0.3);
+}
+
+.gitStatus {
+  font-size: 10px;
+  margin-left: auto;
+  padding-left: 8px;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.gitStatus.modified {
+  color: var(--yellow-accent);
+}
+
+.gitStatus.added {
+  color: var(--green-accent);
+}
+
+.folder {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  max-height: 500px;
+}
+
+.folder.folded {
+  max-height: 0;
+}

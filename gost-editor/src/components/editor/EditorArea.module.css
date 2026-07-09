@@ -1,0 +1,221 @@
+.breadcrumbs {
+  padding: 0 20px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  height: 28px;
+}
+
+.breadcrumbs span {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.breadcrumbs span:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.bcSep {
+  color: var(--text-dim);
+  width: 9px;
+  height: 9px;
+}
+
+.bcCurrent {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Tabs */
+.tabsBar {
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: stretch;
+  padding: 0 0 0 8px;
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
+  height: 38px;
+  gap: 1px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tabsBar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  padding: 0 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  font-weight: 450;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tab:hover:not(.active) {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.tab.active {
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border-bottom-color: var(--purple-accent);
+}
+
+.tabIcon {
+  font-size: 12px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+}
+
+.tab.active .tabIcon {
+  color: var(--purple-accent);
+}
+
+.tabName {
+  font-size: 12px;
+}
+
+.tabModified {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--yellow-accent);
+  box-shadow: 0 0 4px rgba(255, 189, 46, 0.3);
+  flex-shrink: 0;
+}
+
+.tabSaved {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green-accent);
+  box-shadow: 0 0 4px rgba(63, 185, 80, 0.3);
+  flex-shrink: 0;
+}
+
+.tabClose {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: transparent;
+  transition: all var(--transition-fast);
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.tab:hover .tabClose,
+.tab.active .tabClose {
+  color: var(--text-dim);
+}
+
+.tabClose:hover {
+  background: rgba(255, 123, 114, 0.15);
+  color: var(--red-accent) !important;
+}
+
+.tabClose svg {
+  width: 9px;
+  height: 9px;
+}
+
+.tabAdd {
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-sm);
+  margin: 0 4px;
+}
+
+.tabAdd:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.unsavedIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  font-size: 11px;
+  color: var(--yellow-accent);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-sm);
+  height: 100%;
+  white-space: nowrap;
+}
+
+.unsavedIndicator:hover {
+  background: var(--bg-hover);
+}
+
+.tabOverflow {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  padding-right: 8px;
+  flex-shrink: 0;
+}
+
+.tabOverflow button {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+}
+
+.tabOverflow button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+/* Editor wrapper */
+.editorWrapper {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-primary);
+}
+
+.editorScrollArea {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  min-width: 0;
+}

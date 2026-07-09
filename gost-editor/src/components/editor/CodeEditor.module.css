@@ -1,0 +1,13 @@
+.editor {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.editor :global(.cm-editor) {
+  height: 100%;
+}
+
+.editor :global(.cm-scroller) {
+  overflow: auto;
+}

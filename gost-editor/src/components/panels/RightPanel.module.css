@@ -1,0 +1,244 @@
+.rpSection {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.problemsSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rpTitle {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.rpTitle svg {
+  width: 11px;
+  height: 11px;
+}
+
+.problemCount {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.runConfig {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.configRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 11.5px;
+}
+
+.configLabel {
+  color: var(--text-muted);
+}
+
+.configValue {
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.runButton {
+  background: linear-gradient(135deg, var(--purple-accent), var(--purple-dim));
+  color: var(--bg-deepest);
+  border: none;
+  padding: 9px 0;
+  border-radius: 40px;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(188, 140, 255, 0.25);
+  font-family: inherit;
+  width: 100%;
+}
+
+.runButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(188, 140, 255, 0.35);
+}
+
+.runButton:active {
+  transform: translateY(0);
+}
+
+.runButton svg {
+  width: 12px;
+  height: 12px;
+}
+
+.problemsList {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.problem {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding-left: 4px;
+  padding-right: 4px;
+  transition: all var(--transition-fast);
+}
+
+.problem:hover {
+  background: var(--bg-hover);
+}
+
+.problem svg {
+  width: 12px;
+  height: 12px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.problem.error svg { color: var(--red-accent); }
+.problem.warning svg { color: var(--yellow-accent); }
+.problem.info svg { color: var(--blue-accent); }
+
+.problemText {
+  color: var(--text-secondary);
+  font-size: 11.5px;
+}
+
+.fileRef {
+  color: var(--text-dim);
+  font-size: 10px;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Terminal */
+.terminalSection {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-primary);
+}
+
+.terminalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+}
+
+.thTitle {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.thTitle svg {
+  width: 11px;
+  height: 11px;
+}
+
+.thActions {
+  display: flex;
+  gap: 4px;
+}
+
+.thActions button {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 3px 5px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+}
+
+.thActions button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.thActions button svg {
+  width: 10px;
+  height: 10px;
+}
+
+.terminalBody {
+  padding: 0 14px 10px 14px;
+  max-height: 140px;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.termLine {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 1.5px 0;
+  line-height: 1.5;
+}
+
+.termLine .prompt {
+  color: var(--purple-accent);
+}
+
+.termLine .cmd {
+  color: var(--cyan-accent);
+}
+
+.termLine .success {
+  color: var(--green-accent);
+}
+
+.termLine .infoText {
+  color: var(--blue-accent);
+}
+
+.cursor {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  background: var(--purple-accent);
+  animation: cursorBlink 1s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}

@@ -1,0 +1,214 @@
+.titleBar {
+  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+  -webkit-app-region: drag;
+}
+
+.windowControls,
+.brand,
+.projectName,
+.actions,
+.dropdownMenu {
+  -webkit-app-region: no-drag;
+}
+
+.windowControls {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+  border: none;
+  padding: 0;
+}
+
+.dot:hover {
+  transform: scale(1.15);
+}
+
+.close { background: #ff5f57; }
+.minimize { background: #ffbd2e; }
+.maximize { background: #28c840; }
+
+.brand {
+  color: var(--purple-accent);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.brand svg {
+  filter: drop-shadow(0 0 6px rgba(188, 140, 255, 0.4));
+}
+
+.projectName {
+  color: var(--text-secondary);
+  font-size: 12px;
+  background: var(--bg-elevated);
+  padding: 4px 14px;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.projectName:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-accent);
+}
+
+.projectName svg:first-child {
+  color: var(--blue-accent);
+  width: 11px;
+}
+
+.branch {
+  color: var(--purple-accent);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.actionBtn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  position: relative;
+  font-size: 14px;
+}
+
+.actionBtn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.badgeCount {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  background: var(--red-accent);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--bg-primary);
+}
+
+.profileBtn {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, var(--purple-dim), var(--blue-accent)) !important;
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: 6px;
+  min-width: 220px;
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  z-index: 101;
+  animation: dropdownIn 0.2s ease both;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dmItem {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dmItem:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.dmItem svg {
+  width: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.dmItem:hover svg {
+  color: var(--purple-accent);
+}
+
+.dmIcon {
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.dmItem:hover .dmIcon {
+  color: var(--purple-accent);
+}
+
+.dmSep {
+  height: 1px;
+  background: var(--border-primary);
+  margin: 4px 8px;
+}
