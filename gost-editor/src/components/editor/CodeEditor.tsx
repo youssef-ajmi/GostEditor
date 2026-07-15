@@ -198,6 +198,9 @@ export default function CodeEditor() {
             const pos = update.state.selection.main.head;
             const line = update.state.doc.lineAt(pos);
             setCursor({ line: line.number, col: pos - line.from + 1 });
+            const sel = update.state.selection.main;
+            const selectedLen = Math.abs(sel.from - sel.to);
+            useEditorStore.setState((s) => ({ editor: { ...s.editor, selected: selectedLen } }));
           }
         }),
       ],

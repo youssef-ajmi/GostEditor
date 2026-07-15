@@ -7,6 +7,8 @@ export default function StatusBar() {
   const setSettings = useEditorStore((s) => s.setSettings);
   const problems = useEditorStore((s) => s.problems);
   const cursor = useEditorStore((s) => s.editor.cursor);
+  const selected = useEditorStore((s) => s.editor.selected);
+  const tabSize = useEditorStore((s) => s.settings.tabSize);
   const activeTab = useEditorStore((s) => s.tabs.items.find((t) => t.id === s.tabs.activeId));
 
   const errors = problems.filter((p) => p.type === 'error').length;
@@ -32,14 +34,14 @@ export default function StatusBar() {
           <ArrowDown size={11} /> LF
         </span>
         <span className={styles.statusItem} title="Indentation">
-          <Indent size={11} /> Spaces: 2
+          <Indent size={11} /> Spaces: {tabSize}
         </span>
         <span className={styles.statusSep}>|</span>
         <span className={styles.statusItem} title="Go to Line">
           <MapPin size={11} /> Ln {cursor.line}, Col {cursor.col}
         </span>
         <span className={styles.statusItem} title="Selection">
-          <MousePointer2 size={11} /> 0 selected
+          <MousePointer2 size={11} /> {selected > 0 ? `${selected} selected` : '0 selected'}
         </span>
         <span className={styles.sep}>|</span>
         <span className={`${styles.statusToggle} ${autoSave ? styles.on : styles.off}`} title={autoSave ? 'Auto-save: on — click to disable' : 'Auto-save: off — click to enable'} onClick={() => setSettings({ autoSave: !autoSave })}>
@@ -47,7 +49,7 @@ export default function StatusBar() {
         </span>
         <span className={styles.sep}>|</span>
         <span className={styles.statusItem} title="Memory Usage">
-          <Microchip size={11} style={{ color: 'var(--blue-accent)' }} /> 1.2 GB
+          <Microchip size={11} style={{ color: 'var(--blue-accent)' }} />
         </span>
       </div>
     </div>

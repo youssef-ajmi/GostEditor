@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Copy, Scissors, Clipboard, CheckSquare, Undo, Redo, Search } from 'lucide-react';
 
 interface ContextMenuProps {
@@ -23,6 +23,18 @@ const items = [
 
 export default function ContextMenu({ x, y, onClose, onAction }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ left: x, top: y });
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    setPos({
+      left: Math.min(x, vw - rect.width - 8),
+      top: Math.min(y, vh - rect.height - 8),
+    });
+  }, [x, y]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -46,8 +58,8 @@ export default function ContextMenu({ x, y, onClose, onAction }: ContextMenuProp
       ref={ref}
       style={{
         position: 'fixed',
-        left: x,
-        top: y,
+        left: pos.left,
+        top: pos.top,
         zIndex: 1000,
         minWidth: 180,
         background: 'var(--bg-secondary)',

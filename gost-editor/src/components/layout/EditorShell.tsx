@@ -5,6 +5,7 @@ import MenuBar from './MenuBar';
 import StatusBar from './StatusBar';
 import FileTree from '../sidebar/FileTree';
 import SearchPanel from '../sidebar/SearchPanel';
+import RightPanel from '../panels/RightPanel';
 import EditorArea from '../editor/EditorArea';
 
 import CommandPalette from '../ui/CommandPalette';
@@ -41,9 +42,9 @@ export default function EditorShell() {
         if (chordTimer.current) {
           clearTimeout(chordTimer.current);
           chordTimer.current = undefined;
-          openFolder();
+          openFolder().catch(console.error);
         } else {
-          openFileDialog();
+          openFileDialog().catch(console.error);
         }
         return;
       }
@@ -130,21 +131,60 @@ export default function EditorShell() {
           })),
         };
 
+        let gitBranch = '';
+        try {
+          gitBranch = await invoke<string>('get_git_branch', { path: savedPath });
+        } catch {}
+
         useEditorStore.setState((s) => ({
           workspace: {
             ...s.workspace,
             path: info.path,
             name: info.name,
+            gitBranch,
             fileTree: [root],
           },
         }));
+
+        const savedTabs = localStorage.getItem('gost-session-tabs');
+        if (savedTabs) {
+          try {
+            const tabData = JSON.parse(savedTabs) as { id: string; name: string; path: string; language: string }[];
+            const store = useEditorStore.getState();
+            const tabStates = tabData.map((t) => ({ tab: t, content: store.fileContents[t.id] }));
+            for (const { tab } of tabStates) {
+              const exists = store.tabs.items.find((t) => t.id === tab.id);
+              if (!exists) {
+                try {
+                  const content = await invoke<string>('read_file', { path: tab.id });
+                  useEditorStore.setState((s) => ({
+                    tabs: { items: [...s.tabs.items, { ...tab, dirty: false }], activeId: s.tabs.activeId || tab.id, dirty: s.tabs.dirty },
+                    fileContents: { ...s.fileContents, [tab.id]: content },
+                  }));
+                } catch {
+                  // file no longer exists, skip
+                }
+              }
+            }
+          } catch {
+            localStorage.removeItem('gost-session-tabs');
+          }
+        }
       } catch {
         localStorage.removeItem('gost-workspace-path');
       }
     })();
   }, []);
 
-  const tabs = [
+  // Persist open tabs to localStorage whenever they change
+  const storeTabs = useEditorStore((s) => s.tabs);
+  useEffect(() => {
+    if (!restored.current) return;
+    const tabData = storeTabs.items.map((t) => ({ id: t.id, name: t.name, path: t.path, language: t.language }));
+    localStorage.setItem('gost-session-tabs', JSON.stringify(tabData));
+  }, [storeTabs.items]);
+
+  const sideTabs = [
     { id: 'project' as const, icon: FolderTree, label: 'Project' },
     { id: 'search' as const, icon: Search, label: 'Search' },
   ];
@@ -165,7 +205,7 @@ export default function EditorShell() {
           </button>
 
           <div className={styles.sidebarTabs}>
-            {tabs.map((tab) => (
+            {sideTabs.map((tab) => (
               <span
                 key={tab.id}
                 className={`${styles.stab} ${panels.leftTab === tab.id ? styles.active : ''}`}
@@ -194,7 +234,7 @@ export default function EditorShell() {
         </div>
 
         {panels.rightOpen && (
-          <div className={styles.rightPanel}>
+          <div className={`${styles.rightPanel} ${!panels.rightOpen ? styles.collapsed : ''}`}>
             <button
               className={styles.rightPanelToggle}
               onClick={() => setRightOpen(!panels.rightOpen)}
@@ -202,6 +242,7 @@ export default function EditorShell() {
             >
               <ChevronRight size={10} />
             </button>
+            <RightPanel />
           </div>
         )}
       </div>

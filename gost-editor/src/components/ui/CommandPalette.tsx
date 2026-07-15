@@ -59,10 +59,10 @@ export default function CommandPalette() {
 
   const actionItems: ActionItem[] = [
     { type: 'action', icon: Plus, label: 'New File', shortcut: 'Ctrl+N', action: () => store().newFile() },
-    { type: 'action', icon: Save, label: 'Save', shortcut: 'Ctrl+S', action: () => { const s = store(); if (s.tabs.activeId) s.saveFile(s.tabs.activeId); } },
-    { type: 'action', icon: Save, label: 'Save All', shortcut: 'Ctrl+Shift+S', action: () => store().saveAll() },
+    { type: 'action', icon: Save, label: 'Save', shortcut: 'Ctrl+S', action: () => { const s = store(); if (s.tabs.activeId) s.saveFile(s.tabs.activeId).catch(console.error); } },
+    { type: 'action', icon: Save, label: 'Save All', shortcut: 'Ctrl+Shift+S', action: () => store().saveAll().catch(console.error) },
     { type: 'action', icon: X, label: 'Close Tab', shortcut: 'Ctrl+F4', action: () => { const s = store(); if (s.tabs.activeId) s.closeTab(s.tabs.activeId); } },
-    { type: 'action', icon: FolderOpen, label: 'Open Folder', shortcut: 'Ctrl+Shift+O', action: async () => { const { openFolder } = await import('../../store/openFolder'); openFolder(); } },
+    { type: 'action', icon: FolderOpen, label: 'Open Folder', shortcut: 'Ctrl+Shift+O', action: async () => { const { openFolder } = await import('../../store/openFolder'); await openFolder(); } },
     { type: 'action', icon: Sidebar, label: 'Toggle Sidebar', shortcut: 'Ctrl+B', action: () => store().toggleLeft() },
     { type: 'action', icon: PanelRight, label: 'Toggle Right Panel', shortcut: '', action: () => store().toggleRight() },
     { type: 'action', icon: Terminal, label: 'Toggle Terminal', shortcut: 'Ctrl+`', action: () => store().setRightOpen(!store().panels.rightOpen) },
@@ -99,18 +99,26 @@ export default function CommandPalette() {
       }
       if (open && e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelected(s => Math.min(s + 1, filtered.length - 1));
+        setSelected(s => {
+          let next = s;
+          do { next = Math.min(next + 1, filtered.length - 1); } while (next < filtered.length - 1 && filtered[next]?.type === 'sep');
+          return next;
+        });
       }
       if (open && e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelected(s => Math.max(s - 1, 0));
+        setSelected(s => {
+          let prev = s;
+          do { prev = Math.max(prev - 1, 0); } while (prev > 0 && filtered[prev]?.type === 'sep');
+          return prev;
+        });
       }
       if (open && e.key === 'Enter') {
         e.preventDefault();
         const item = filtered[selected];
         if (!item || item.type === 'sep') return;
         if (item.type === 'file') {
-          store().openFile(item.path, item.label);
+          store().openFile(item.path, item.label).catch(console.error);
         } else {
           item.action();
         }
@@ -147,7 +155,7 @@ export default function CommandPalette() {
                 <div
                   key={item.path}
                   className={`${styles.item} ${isSelected ? styles.selected : ''}`}
-                  onClick={() => { store().openFile(item.path, item.label); setOpen(false); }}
+                  onClick={() => { store().openFile(item.path, item.label).catch(console.error); setOpen(false); }}
                   onMouseEnter={() => setSelected(i)}
                 >
                   <FileCode size={12} style={{ color: item.color }} />

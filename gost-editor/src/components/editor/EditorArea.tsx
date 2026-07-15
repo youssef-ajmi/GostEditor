@@ -36,6 +36,7 @@ export default function EditorArea() {
   const tabs = useEditorStore((s) => s.tabs);
   const setActiveTab = useEditorStore((s) => s.setActiveTab);
   const closeTab = useEditorStore((s) => s.closeTab);
+  const newFile = useEditorStore((s) => s.newFile);
   const dirtyCount = tabs.dirty.size;
 
   return (
@@ -63,7 +64,7 @@ export default function EditorArea() {
             </span>
           </div>
         ))}
-        <div className={styles.tabAdd} title="New Tab">
+        <div className={styles.tabAdd} title="New Tab" onClick={newFile}>
           <Plus size={12} />
         </div>
         {dirtyCount > 0 && (
@@ -73,7 +74,7 @@ export default function EditorArea() {
           </div>
         )}
         <div className={styles.tabOverflow}>
-          <button title="Split Editor"><Columns size={11} /></button>
+          <button title="Split Editor" disabled><Columns size={11} /></button>
         </div>
       </div>
 

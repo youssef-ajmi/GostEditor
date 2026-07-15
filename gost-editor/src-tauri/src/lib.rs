@@ -25,12 +25,17 @@ fn list_dir(path: String) -> Result<Vec<FileEntry>, String> {
         return Err(format!("Not a directory: {}", path));
     }
 
+    let ignored_dirs = [".git", "node_modules", "target", "dist", ".vscode", ".idea", "__pycache__", ".opencode"];
     let mut entries = Vec::new();
     for entry in fs::read_dir(dir).map_err(|e| e.to_string())? {
         let entry = entry.map_err(|e| e.to_string())?;
+        let name = entry.file_name().to_string_lossy().to_string();
+        if name.starts_with('.') || ignored_dirs.contains(&name.as_str()) {
+            continue;
+        }
         let metadata = entry.metadata().map_err(|e| e.to_string())?;
         entries.push(FileEntry {
-            name: entry.file_name().to_string_lossy().to_string(),
+            name,
             path: entry.path().to_string_lossy().to_string(),
             is_dir: metadata.is_dir(),
             size: metadata.len(),
