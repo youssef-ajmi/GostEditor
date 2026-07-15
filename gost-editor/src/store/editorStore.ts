@@ -70,7 +70,7 @@ interface EditorStore {
     fontSize: number;
     tabSize: number;
     fontFamily: string;
-    theme: 'dark';
+    theme: 'dark' | 'light';
     autoSave: boolean;
   };
 
@@ -82,6 +82,7 @@ interface EditorStore {
   setFileContent: (filePath: string, content: string) => void;
   saveFile: (filePath: string) => Promise<void>;
   setCursor: (cursor: CursorPosition) => void;
+  persistPanels: (panels: Partial<EditorStore['panels']>) => void;
   setLeftOpen: (open: boolean) => void;
   setLeftTab: (tab: LeftTab) => void;
   setRightOpen: (open: boolean) => void;
@@ -89,6 +90,7 @@ interface EditorStore {
   toggleRight: () => void;
   setProblems: (problems: Problem[]) => void;
   setSettings: (settings: Partial<EditorStore['settings']>) => void;
+  toggleTheme: () => void;
   recentProjects: string[];
   createFile: (parentPath: string, name: string) => Promise<void>;
   createFolder: (parentPath: string, name: string) => Promise<void>;
@@ -130,19 +132,20 @@ export const useEditorStore = create<EditorStore>((set) => ({
   },
   fileContents: {},
   recentProjects: JSON.parse(localStorage.getItem('gost-recent-projects') || '[]'),
-  panels: {
-    leftOpen: true,
-    leftTab: 'project',
-    rightOpen: true,
-    terminalOpen: true,
-    terminalHeight: 140,
-  },
+  panels: (() => {
+    const saved = localStorage.getItem('gost-panels');
+    if (saved) {
+      try { return { leftOpen: true, leftTab: 'project', rightOpen: true, terminalOpen: true, terminalHeight: 140, ...JSON.parse(saved) }; }
+      catch {}
+    }
+    return { leftOpen: true, leftTab: 'project', rightOpen: true, terminalOpen: true, terminalHeight: 140 };
+  })(),
   problems: [],
   settings: {
     fontSize: 13,
     tabSize: 2,
     fontFamily: 'JetBrains Mono',
-    theme: 'dark',
+    theme: (localStorage.getItem('gost-theme') as 'dark' | 'light') || 'dark',
     autoSave: true,
   },
 
@@ -293,38 +296,64 @@ export const useEditorStore = create<EditorStore>((set) => ({
       editor: { ...state.editor, cursor },
     })),
 
+  persistPanels: (panels: Partial<EditorStore['panels']>) =>
+    set((state) => {
+      const updated = { ...state.panels, ...panels };
+      localStorage.setItem('gost-panels', JSON.stringify(updated));
+      return { panels: updated };
+    }),
+
   setLeftOpen: (open: boolean) =>
-    set((state) => ({
-      panels: { ...state.panels, leftOpen: open },
-    })),
+    set((state) => {
+      const updated = { ...state.panels, leftOpen: open };
+      localStorage.setItem('gost-panels', JSON.stringify(updated));
+      return { panels: updated };
+    }),
 
   setLeftTab: (tab: LeftTab) =>
-    set((state) => ({
-      panels: { ...state.panels, leftTab: tab },
-    })),
+    set((state) => {
+      const updated = { ...state.panels, leftTab: tab };
+      localStorage.setItem('gost-panels', JSON.stringify(updated));
+      return { panels: updated };
+    }),
 
   setRightOpen: (open: boolean) =>
-    set((state) => ({
-      panels: { ...state.panels, rightOpen: open },
-    })),
+    set((state) => {
+      const updated = { ...state.panels, rightOpen: open };
+      localStorage.setItem('gost-panels', JSON.stringify(updated));
+      return { panels: updated };
+    }),
 
   toggleLeft: () =>
-    set((state) => ({
-      panels: { ...state.panels, leftOpen: !state.panels.leftOpen },
-    })),
+    set((state) => {
+      const updated = { ...state.panels, leftOpen: !state.panels.leftOpen };
+      localStorage.setItem('gost-panels', JSON.stringify(updated));
+      return { panels: updated };
+    }),
 
   toggleRight: () =>
-    set((state) => ({
-      panels: { ...state.panels, rightOpen: !state.panels.rightOpen },
-    })),
+    set((state) => {
+      const updated = { ...state.panels, rightOpen: !state.panels.rightOpen };
+      localStorage.setItem('gost-panels', JSON.stringify(updated));
+      return { panels: updated };
+    }),
 
   setProblems: (problems: Problem[]) =>
     set({ problems }),
 
   setSettings: (settings: Partial<EditorStore['settings']>) =>
-    set((state) => ({
-      settings: { ...state.settings, ...settings },
-    })),
+    set((state) => {
+      const updated = { ...state.settings, ...settings };
+      localStorage.setItem('gost-theme', updated.theme);
+      return { settings: updated };
+    }),
+
+  toggleTheme: () =>
+    set((state) => {
+      const next = state.settings.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('gost-theme', next);
+      return { settings: { ...state.settings, theme: next } };
+    }),
 
   createFile: async (parentPath: string, name: string) => {
     try {

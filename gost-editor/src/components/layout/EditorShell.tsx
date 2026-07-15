@@ -9,6 +9,7 @@ import RightPanel from '../panels/RightPanel';
 import EditorArea from '../editor/EditorArea';
 
 import CommandPalette from '../ui/CommandPalette';
+import GoToLine from '../ui/GoToLine';
 import ContextMenu from '../ui/ContextMenu';
 import styles from './EditorShell.module.css';
 import { useEditorStore } from '../../store/editorStore';
@@ -18,7 +19,7 @@ import { openFileDialog } from '../../store/openFile';
 import { openFolder } from '../../store/openFolder';
 
 export default function EditorShell() {
-  const { panels, setLeftOpen, setRightOpen, setLeftTab, toggleLeft } = useEditorStore();
+  const { panels, setLeftOpen, setRightOpen, setLeftTab } = useEditorStore();
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
 
   const handleContextAction = useCallback((action: string) => {
@@ -30,10 +31,11 @@ export default function EditorShell() {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const mod = e.ctrlKey || e.metaKey;
+      const store = useEditorStore.getState();
 
       if (mod && e.key === 'b') {
         e.preventDefault();
-        toggleLeft();
+        store.toggleLeft();
         return;
       }
 
@@ -105,7 +107,7 @@ export default function EditorShell() {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('contextmenu', handleContext);
     };
-  }, [toggleLeft]);
+  }, []);
 
   const restored = useRef(false);
   useEffect(() => {
@@ -249,6 +251,7 @@ export default function EditorShell() {
 
       <StatusBar />
       <CommandPalette />
+      <GoToLine />
       {ctxMenu && (
         <ContextMenu
           x={ctxMenu.x}

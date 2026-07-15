@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, FileCode, Cog, Terminal, FolderOpen, Save, X, Sidebar, PanelRight, Plus } from 'lucide-react';
+import { Search, FileCode, Cog, Terminal, FolderOpen, Save, X, Sidebar, PanelRight, Plus, SunMoon } from 'lucide-react';
 import styles from './CommandPalette.module.css';
 import { useEditorStore, FileNode } from '../../store/editorStore';
 
@@ -66,6 +66,7 @@ export default function CommandPalette() {
     { type: 'action', icon: Sidebar, label: 'Toggle Sidebar', shortcut: 'Ctrl+B', action: () => store().toggleLeft() },
     { type: 'action', icon: PanelRight, label: 'Toggle Right Panel', shortcut: '', action: () => store().toggleRight() },
     { type: 'action', icon: Terminal, label: 'Toggle Terminal', shortcut: 'Ctrl+`', action: () => store().setRightOpen(!store().panels.rightOpen) },
+    { type: 'action', icon: SunMoon, label: 'Toggle Theme', shortcut: '', action: () => store().toggleTheme() },
   ];
 
   const allItems: CommandItem[] = [
