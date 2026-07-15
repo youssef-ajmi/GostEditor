@@ -115,6 +115,8 @@ export default function CodeEditor() {
       const diagnostics: Diagnostic[] = [];
       const problems: Problem[] = [];
       const tree = syntaxTree(view.state);
+      const lang = activeTab?.language;
+      if (lang === 'go') return diagnostics;
       tree.iterate({
         enter: (node) => {
           if (node.name === '⚠') {
