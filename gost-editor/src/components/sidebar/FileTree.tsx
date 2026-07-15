@@ -39,6 +39,14 @@ function TreeItem({ node, depth = 0, onContextMenu }: { node: FileNode; depth?: 
 
   useEffect(() => () => { mountedRef.current = false; }, []);
 
+  const prevChildrenLen = useRef(node.children?.length ?? 0);
+  useEffect(() => {
+    if (node.children && node.children.length > prevChildrenLen.current) {
+      setOpen(true);
+    }
+    prevChildrenLen.current = node.children?.length ?? 0;
+  }, [node.children?.length]);
+
   if (node.type === 'folder') {
     const fileIcon = open
       ? <FolderOpen size={14} style={{ color: 'var(--blue-accent)' }} />
@@ -51,13 +59,9 @@ function TreeItem({ node, depth = 0, onContextMenu }: { node: FileNode; depth?: 
           setOpen(true);
         } else {
           loadingRef.current = true;
+          setOpen(true);
           setLoading(true);
-          expandDir(node.path).then(() => {
-            if (!mountedRef.current) return;
-            setOpen(true);
-            setLoading(false);
-            loadingRef.current = false;
-          }).catch(() => {
+          expandDir(node.path).finally(() => {
             if (!mountedRef.current) return;
             setLoading(false);
             loadingRef.current = false;
@@ -67,8 +71,6 @@ function TreeItem({ node, depth = 0, onContextMenu }: { node: FileNode; depth?: 
         setOpen(!open);
       }
     }
-
-    console.log('TreeItem folder render:', node.name, { open, hasChildren, childrenLen: node.children?.length, path: node.path }, node);
 
     return (
       <>
