@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Box, GitBranch, Bell, Search, Cog, User } from 'lucide-react';
+import { Box, Bell, Search, Cog, User } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import styles from './TitleBar.module.css';
+import { useEditorStore } from '../../store/editorStore';
+import { openFolder } from '../../store/openFolder';
 
 export default function TitleBar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -9,6 +11,7 @@ export default function TitleBar() {
   const settingsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const appWindow = getCurrentWindow();
+  const workspace = useEditorStore((s) => s.workspace);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -36,13 +39,9 @@ export default function TitleBar() {
         Gost
       </div>
 
-      <div className={styles.projectName} title="Switch project">
+      <div className={styles.projectName} title={workspace.path ? "Switch project" : "Open a project"} onClick={openFolder}>
         <FolderOpenIcon />
-        my-app
-        <span className={styles.branch}>
-          <GitBranch size={11} />
-          main
-        </span>
+        {workspace.name || 'No project'}
       </div>
 
       <div className={styles.actions}>
@@ -52,9 +51,6 @@ export default function TitleBar() {
         </button>
         <button className={styles.actionBtn} title="Search Everywhere (Ctrl+P)">
           <Search size={14} />
-        </button>
-        <button className={styles.actionBtn} title="Git">
-          <GitBranch size={14} />
         </button>
         <div ref={settingsRef} style={{ position: 'relative' }}>
           <button

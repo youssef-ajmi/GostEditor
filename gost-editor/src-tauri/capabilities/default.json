@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": ["main", "Gost-*"],
   "permissions": [
     "core:default",
     "opener:default",
@@ -11,10 +11,16 @@
     "fs:write-all",
     "shell:default",
     "shell:allow-open",
+    "shell:allow-spawn",
+    "shell:allow-stdin-write",
+    "shell:allow-kill",
     "core:window:allow-close",
     "core:window:allow-minimize",
     "core:window:allow-maximize",
     "core:window:allow-unmaximize",
-    "core:window:allow-toggle-maximize"
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-create",
+    "core:webview:allow-create-webview-window",
+    "dialog:default"
   ]
 }

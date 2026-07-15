@@ -1,41 +1,87 @@
-import { useState, useEffect, useRef } from 'react';
-import { Search, FileCode, Cog, Keyboard, Terminal } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Search, FileCode, Cog, Terminal, FolderOpen, Save, X, Sidebar, PanelRight, Plus } from 'lucide-react';
 import styles from './CommandPalette.module.css';
+import { useEditorStore, FileNode } from '../../store/editorStore';
 
-type CommandItem = {
+type FileItem = {
+  type: 'file';
+  icon: typeof FileCode;
+  label: string;
+  subtitle: string;
+  color: string;
+  path: string;
+};
+
+type ActionItem = {
+  type: 'action';
   icon: typeof Cog;
   label: string;
   shortcut: string;
-  color?: string;
-  type?: 'item';
-} | {
-  type: 'sep';
+  action: () => void;
 };
 
-const commands: CommandItem[] = [
-  { icon: FileCode, label: 'app.ts', shortcut: 'frontend/', color: '#3178c6' },
-  { icon: FileCode, label: 'main.go', shortcut: 'backend/', color: '#00add8' },
-  { icon: FileCode, label: 'template.ts', shortcut: '.gost/runtime/', color: '#3178c6' },
-  { icon: FileCode, label: 'api.ts', shortcut: '.gost/generated/', color: '#3178c6' },
-  { icon: FileCode, label: 'ws.go', shortcut: 'backend/', color: '#00add8' },
-  { icon: FileCode, label: 'app.html', shortcut: 'frontend/', color: '#e34c26' },
-  { type: 'sep' },
-  { icon: Cog, label: 'Preferences', shortcut: 'Ctrl+,' },
-  { icon: Keyboard, label: 'Keymap Settings', shortcut: 'Ctrl+K Ctrl+S' },
-  { icon: Terminal, label: 'Toggle Terminal', shortcut: 'Ctrl+`' },
-];
+type Sep = { type: 'sep' };
+
+type CommandItem = FileItem | ActionItem | Sep;
+
+function flattenTree(nodes: FileNode[], prefix = ''): FileItem[] {
+  const result: FileItem[] = [];
+  for (const node of nodes) {
+    const label = node.name;
+    const subtitle = prefix;
+    const ext = node.name.split('.').pop()?.toLowerCase() || '';
+    const colorMap: Record<string, string> = {
+      ts: '#3178c6', tsx: '#3178c6', js: '#f0db4f', jsx: '#f0db4f',
+      go: '#00add8', html: '#e34c26', css: '#563d7c', json: '#f0883e',
+      md: '#58a6ff', py: '#3776ab', rs: '#dea584', java: '#b07219',
+      xml: '#0060ac', yaml: '#6a6a8a', sql: '#e38c00',
+    };
+    const color = colorMap[ext] || 'var(--text-muted)';
+    if (node.type === 'file' && node.path) {
+      result.push({ type: 'file', icon: FileCode, label, subtitle, color, path: node.path });
+    }
+    if (node.children) {
+      result.push(...flattenTree(node.children, prefix ? `${prefix}/${node.name}` : node.name));
+    }
+  }
+  return result;
+}
 
 export default function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileTree = useEditorStore((s) => s.workspace.fileTree);
+  const store = useEditorStore.getState;
 
-  const items = commands.filter((item): item is CommandItem & { type?: 'item' } => {
-    if (item.type === 'sep') return false;
-    if (!query) return true;
-    return item.label.toLowerCase().includes(query.toLowerCase());
-  });
+  const fileItems = useMemo(() => flattenTree(fileTree), [fileTree]);
+
+  const actionItems: ActionItem[] = [
+    { type: 'action', icon: Plus, label: 'New File', shortcut: 'Ctrl+N', action: () => store().newFile() },
+    { type: 'action', icon: Save, label: 'Save', shortcut: 'Ctrl+S', action: () => { const s = store(); if (s.tabs.activeId) s.saveFile(s.tabs.activeId); } },
+    { type: 'action', icon: Save, label: 'Save All', shortcut: 'Ctrl+Shift+S', action: () => store().saveAll() },
+    { type: 'action', icon: X, label: 'Close Tab', shortcut: 'Ctrl+F4', action: () => { const s = store(); if (s.tabs.activeId) s.closeTab(s.tabs.activeId); } },
+    { type: 'action', icon: FolderOpen, label: 'Open Folder', shortcut: 'Ctrl+Shift+O', action: async () => { const { openFolder } = await import('../../store/openFolder'); openFolder(); } },
+    { type: 'action', icon: Sidebar, label: 'Toggle Sidebar', shortcut: 'Ctrl+B', action: () => store().toggleLeft() },
+    { type: 'action', icon: PanelRight, label: 'Toggle Right Panel', shortcut: '', action: () => store().toggleRight() },
+    { type: 'action', icon: Terminal, label: 'Toggle Terminal', shortcut: 'Ctrl+`', action: () => store().setRightOpen(!store().panels.rightOpen) },
+  ];
+
+  const allItems: CommandItem[] = [
+    ...fileItems,
+    ...(fileItems.length > 0 ? [{ type: 'sep' as const }] : []),
+    ...actionItems,
+  ];
+
+  const filtered = useMemo(() => {
+    if (!query) return allItems;
+    const q = query.toLowerCase();
+    return allItems.filter((item) => {
+      if (item.type === 'sep') return true;
+      return item.label.toLowerCase().includes(q) || ('subtitle' in item && item.subtitle.toLowerCase().includes(q));
+    });
+  }, [query, allItems]);
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -53,16 +99,27 @@ export default function CommandPalette() {
       }
       if (open && e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelected(s => Math.min(s + 1, items.length - 1));
+        setSelected(s => Math.min(s + 1, filtered.length - 1));
       }
       if (open && e.key === 'ArrowUp') {
         e.preventDefault();
         setSelected(s => Math.max(s - 1, 0));
       }
+      if (open && e.key === 'Enter') {
+        e.preventDefault();
+        const item = filtered[selected];
+        if (!item || item.type === 'sep') return;
+        if (item.type === 'file') {
+          store().openFile(item.path, item.label);
+        } else {
+          item.action();
+        }
+        setOpen(false);
+      }
     }
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [open, items.length]);
+  }, [open, filtered, selected]);
 
   if (!open) return null;
 
@@ -80,20 +137,33 @@ export default function CommandPalette() {
           />
         </div>
         <div className={styles.list}>
-          {commands.map((item, i) => {
+          {filtered.map((item, i) => {
             if (item.type === 'sep') {
-              return <div key={i} className={styles.sep} />;
+              return <div key={`sep-${i}`} className={styles.sep} />;
             }
-            const Icon = item.icon;
             const isSelected = i === selected;
+            if (item.type === 'file') {
+              return (
+                <div
+                  key={item.path}
+                  className={`${styles.item} ${isSelected ? styles.selected : ''}`}
+                  onClick={() => { store().openFile(item.path, item.label); setOpen(false); }}
+                  onMouseEnter={() => setSelected(i)}
+                >
+                  <FileCode size={12} style={{ color: item.color }} />
+                  <span className={styles.label}>{item.label}</span>
+                  <span className={styles.shortcut}>{item.subtitle}</span>
+                </div>
+              );
+            }
             return (
               <div
-                key={i}
+                key={item.label}
                 className={`${styles.item} ${isSelected ? styles.selected : ''}`}
-                onClick={() => { setOpen(false); }}
+                onClick={() => { item.action(); setOpen(false); }}
                 onMouseEnter={() => setSelected(i)}
               >
-                <Icon size={12} style={{ color: item.color || 'var(--text-dim)' }} />
+                <item.icon size={12} style={{ color: 'var(--text-dim)' }} />
                 <span className={styles.label}>{item.label}</span>
                 <span className={styles.shortcut}>{item.shortcut}</span>
               </div>

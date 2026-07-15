@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { invoke } from '@tauri-apps/api/core';
+import { save } from '@tauri-apps/plugin-dialog';
 
 export type LeftTab = 'project' | 'search' | 'git' | 'structure';
 
@@ -8,6 +10,16 @@ export interface Tab {
   path: string;
   language: string;
   dirty: boolean;
+}
+
+export interface FileNode {
+  name: string;
+  type: 'file' | 'folder';
+  path?: string;
+  children?: FileNode[];
+  gitStatus?: 'M' | 'A' | 'D';
+  modified?: boolean;
+  active?: boolean;
 }
 
 export interface Problem {
@@ -30,17 +42,22 @@ interface TabState {
 }
 
 interface EditorStore {
+  saveFileAs: () => Promise<void>;
+  newWindow: () => Promise<void>;
+  closeWindow: () => Promise<void>;
   workspace: {
     path: string;
     name: string;
     gitBranch: string;
     gitChanges: number;
+    fileTree: FileNode[];
   };
   tabs: TabState;
   editor: {
     cursor: CursorPosition;
     selected: number;
   };
+  fileContents: Record<string, string>;
   panels: {
     leftOpen: boolean;
     leftTab: LeftTab;
@@ -54,12 +71,16 @@ interface EditorStore {
     tabSize: number;
     fontFamily: string;
     theme: 'dark';
+    autoSave: boolean;
   };
 
   setWorkspace: (path: string, name: string) => void;
-  openTab: (tab: Tab) => void;
+  expandDir: (folderPath: string) => Promise<void>;
+  openFile: (filePath: string, fileName: string) => Promise<void>;
   closeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
+  setFileContent: (filePath: string, content: string) => void;
+  saveFile: (filePath: string) => Promise<void>;
   setCursor: (cursor: CursorPosition) => void;
   setLeftOpen: (open: boolean) => void;
   setLeftTab: (tab: LeftTab) => void;
@@ -68,14 +89,35 @@ interface EditorStore {
   toggleRight: () => void;
   setProblems: (problems: Problem[]) => void;
   setSettings: (settings: Partial<EditorStore['settings']>) => void;
+  recentProjects: string[];
+  createFile: (parentPath: string, name: string) => Promise<void>;
+  createFolder: (parentPath: string, name: string) => Promise<void>;
+  renameItem: (oldPath: string, newName: string) => Promise<void>;
+  deleteItem: (itemPath: string) => Promise<void>;
+  newFile: () => void;
+  saveAll: () => Promise<void>;
+  addRecentProject: (path: string) => void;
 }
+
+function getFileExt(path: string) {
+  return path.split('.').pop()?.toLowerCase() || '';
+}
+
+const langFromExt: Record<string, string> = {
+  ts: 'typescript', tsx: 'tsx', js: 'javascript', jsx: 'jsx',
+  go: 'go', html: 'html', css: 'css', json: 'json',
+  md: 'markdown', py: 'python', rs: 'rust', java: 'java',
+  kt: 'kotlin', xml: 'xml', yaml: 'yaml', yml: 'yaml', sql: 'sql',
+  sh: 'shell', mod: 'go', sum: 'go',
+};
 
 export const useEditorStore = create<EditorStore>((set) => ({
   workspace: {
     path: '',
-    name: 'my-app',
-    gitBranch: 'main',
-    gitChanges: 2,
+    name: '',
+    gitBranch: '',
+    gitChanges: 0,
+    fileTree: [],
   },
   tabs: {
     items: [],
@@ -86,6 +128,8 @@ export const useEditorStore = create<EditorStore>((set) => ({
     cursor: { line: 1, col: 1 },
     selected: 0,
   },
+  fileContents: {},
+  recentProjects: JSON.parse(localStorage.getItem('gost-recent-projects') || '[]'),
   panels: {
     leftOpen: true,
     leftTab: 'project',
@@ -99,27 +143,126 @@ export const useEditorStore = create<EditorStore>((set) => ({
     tabSize: 2,
     fontFamily: 'JetBrains Mono',
     theme: 'dark',
+    autoSave: true,
   },
 
   setWorkspace: (path, name) =>
     set((state) => ({
-      workspace: { ...state.workspace, path, name },
+      workspace: { ...state.workspace, path, name, fileTree: state.workspace.fileTree },
     })),
 
-  openTab: (tab: Tab) =>
+  expandDir: async (folderPath: string) => {
+    try {
+      const entries = await invoke<{ name: string; path: string; is_dir: boolean }[]>('list_dir', { path: folderPath });
+      const children: FileNode[] = entries.map((e) => ({
+        name: e.name,
+        type: e.is_dir ? 'folder' : 'file',
+        path: e.path,
+        children: e.is_dir ? [] : undefined,
+      }));
+      const normalized = folderPath.replace(/\\/g, '/');
+      set((state) => {
+        const replaceNode = (nodes: FileNode[]): FileNode[] =>
+          nodes.map((n) => {
+            if ((n.path ?? '').replace(/\\/g, '/') === normalized) return { ...n, children };
+            if (n.children) return { ...n, children: replaceNode(n.children) };
+            return n;
+          });
+        return { workspace: { ...state.workspace, fileTree: replaceNode(state.workspace.fileTree) } };
+      });
+    } catch (e) {
+      console.error('Failed to expand directory:', folderPath, e);
+    }
+  },
+
+  openFile: async (filePath: string, fileName: string) => {
+    const content = await invoke<string>('read_file', { path: filePath });
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    const langMap: Record<string, string> = { ts: 'typescript', tsx: 'tsx', js: 'javascript', jsx: 'jsx', go: 'go', html: 'html', css: 'css', json: 'json', md: 'markdown', py: 'python', rs: 'rust', java: 'java', kt: 'kotlin', xml: 'xml', yaml: 'yaml', yml: 'yaml', sql: 'sql', sh: 'shell', mod: 'go', sum: 'go' };
+    const language = langMap[ext] || 'text';
+    const tab: Tab = { id: filePath, name: fileName, path: filePath, language, dirty: false };
     set((state) => {
-      const exists = state.tabs.items.find((t) => t.id === tab.id);
-      if (exists) {
-        return { tabs: { ...state.tabs, activeId: tab.id } };
-      }
-      return {
-        tabs: {
-          items: [...state.tabs.items, tab],
-          activeId: tab.id,
-          dirty: state.tabs.dirty,
-        },
-      };
+      const exists = state.tabs.items.find((t) => t.id === filePath);
+      const items = exists ? state.tabs.items : [...state.tabs.items, tab];
+      return { tabs: { items, activeId: filePath, dirty: state.tabs.dirty }, fileContents: { ...state.fileContents, [filePath]: content } };
+    });
+  },
+
+  setFileContent: (filePath: string, content: string) =>
+    set((state) => {
+      const dirty = new Set(state.tabs.dirty);
+      dirty.add(filePath);
+      return { fileContents: { ...state.fileContents, [filePath]: content }, tabs: { ...state.tabs, dirty } };
     }),
+
+  saveFile: async (filePath: string) => {
+    const state = useEditorStore.getState();
+    const content = state.fileContents[filePath];
+    if (!content) return;
+    await invoke('write_file', { path: filePath, content });
+    set((state) => {
+      const dirty = new Set(state.tabs.dirty);
+      dirty.delete(filePath);
+      return { tabs: { ...state.tabs, dirty } };
+    });
+  },
+
+  saveFileAs: async () => {
+    const state = useEditorStore.getState();
+    const activeId = state.tabs.activeId;
+    if (!activeId) return;
+    const content = state.fileContents[activeId];
+    const currentTab = state.tabs.items.find((t) => t.id === activeId);
+
+    const newPath = await save({
+      title: 'Save File As',
+      defaultPath: currentTab?.name,
+      filters: [{ name: 'All Files', extensions: ['*'] }],
+    });
+    if (!newPath) return;
+
+    await invoke('write_file', { path: newPath, content });
+    const name = newPath.split('\\').pop()?.split('/').pop() || newPath;
+    const ext2 = getFileExt(name);
+    const language = langFromExt[ext2] || 'text';
+
+    set((state) => {
+      const items = state.tabs.items.map((t) =>
+        t.id === activeId
+          ? { ...t, id: newPath, name, path: newPath, language }
+          : t
+      );
+      const fileContents = { ...state.fileContents };
+      fileContents[newPath] = content;
+      delete fileContents[activeId];
+      const dirty = new Set(state.tabs.dirty);
+      dirty.delete(activeId);
+      return { tabs: { items, activeId: newPath, dirty }, fileContents };
+    });
+  },
+
+  newWindow: async () => {
+    const { WebviewWindow } = await import('@tauri-apps/api/webviewWindow');
+    const label = 'Gost-' + Date.now();
+    const win = new WebviewWindow(label, {
+      url: '/',
+      title: 'Gost Editor',
+      width: 1480,
+      height: 900,
+      minWidth: 900,
+      minHeight: 600,
+      center: true,
+      decorations: false,
+    });
+    win.once('tauri://error', (e) => {
+      console.error('New window failed:', e);
+    });
+  },
+
+  closeWindow: async () => {
+    const { getCurrentWindow } = await import('@tauri-apps/api/window');
+    await getCurrentWindow().close();
+  },
 
   closeTab: (id: string) =>
     set((state) => {
@@ -132,8 +275,11 @@ export const useEditorStore = create<EditorStore>((set) => ({
         : state.tabs.activeId;
       const dirty = new Set(state.tabs.dirty);
       dirty.delete(id);
+      const fileContents = { ...state.fileContents };
+      delete fileContents[id];
       return {
         tabs: { items, activeId: newActiveId, dirty },
+        fileContents,
       };
     }),
 
@@ -179,4 +325,155 @@ export const useEditorStore = create<EditorStore>((set) => ({
     set((state) => ({
       settings: { ...state.settings, ...settings },
     })),
+
+  createFile: async (parentPath: string, name: string) => {
+    try {
+      const newPath = await invoke<string>('create_file', { parentPath, name });
+      const parsedName = newPath.split('\\').pop()?.split('/').pop() || name;
+      set((state) => {
+        const addChild = (nodes: FileNode[]): FileNode[] =>
+          nodes.map((n) => {
+            if ((n.path ?? '').replace(/\\/g, '/') === parentPath.replace(/\\/g, '/') && n.children) {
+              return { ...n, children: [...n.children, { name: parsedName, type: 'file', path: newPath }] };
+            }
+            if (n.children) return { ...n, children: addChild(n.children) };
+            return n;
+          });
+        return { workspace: { ...state.workspace, fileTree: addChild(state.workspace.fileTree) } };
+      });
+    } catch (e) {
+      console.error('Failed to create file:', e);
+    }
+  },
+
+  createFolder: async (parentPath: string, name: string) => {
+    try {
+      const newPath = await invoke<string>('create_folder', { parentPath, name });
+      const parsedName = newPath.split('\\').pop()?.split('/').pop() || name;
+      set((state) => {
+        const addChild = (nodes: FileNode[]): FileNode[] =>
+          nodes.map((n) => {
+            if ((n.path ?? '').replace(/\\/g, '/') === parentPath.replace(/\\/g, '/') && n.children) {
+              return { ...n, children: [...n.children, { name: parsedName, type: 'folder', path: newPath, children: [] }] };
+            }
+            if (n.children) return { ...n, children: addChild(n.children) };
+            return n;
+          });
+        return { workspace: { ...state.workspace, fileTree: addChild(state.workspace.fileTree) } };
+      });
+    } catch (e) {
+      console.error('Failed to create folder:', e);
+    }
+  },
+
+  renameItem: async (oldPath: string, newName: string) => {
+    try {
+      const newPath = await invoke<string>('rename_item', { oldPath, newName });
+      const parsedName = newPath.split('\\').pop()?.split('/').pop() || newName;
+      set((state) => {
+        const normalizedOld = oldPath.replace(/\\/g, '/');
+
+        const renameInTree = (nodes: FileNode[]): FileNode[] =>
+          nodes.map((n) => {
+            const nPath = (n.path ?? '').replace(/\\/g, '/');
+            if (nPath === normalizedOld) return { ...n, name: parsedName, path: newPath };
+            if (n.children) return { ...n, children: renameInTree(n.children) };
+            return n;
+          });
+
+        const tabs = state.tabs;
+        const items = tabs.items.map((t) => {
+          if (t.id.replace(/\\/g, '/') === normalizedOld) {
+            return { ...t, id: newPath, name: parsedName, path: newPath };
+          }
+          return t;
+        });
+        const activeId = tabs.activeId?.replace(/\\/g, '/') === normalizedOld ? newPath : tabs.activeId;
+
+        const fileContents = { ...state.fileContents };
+        if (fileContents[oldPath] !== undefined) {
+          fileContents[newPath] = fileContents[oldPath];
+          delete fileContents[oldPath];
+        }
+
+        const dirty = new Set(state.tabs.dirty);
+        if (dirty.has(oldPath)) {
+          dirty.delete(oldPath);
+          dirty.add(newPath);
+        }
+
+        return {
+          workspace: { ...state.workspace, fileTree: renameInTree(state.workspace.fileTree) },
+          tabs: { items, activeId, dirty },
+          fileContents,
+        };
+      });
+    } catch (e) {
+      console.error('Failed to rename item:', e);
+    }
+  },
+
+  deleteItem: async (itemPath: string) => {
+    try {
+      await invoke('delete_item', { path: itemPath });
+      set((state) => {
+        const normalizedPath = itemPath.replace(/\\/g, '/');
+
+        const removeFromTree = (nodes: FileNode[]): FileNode[] =>
+          nodes.flatMap((n) => {
+            if ((n.path ?? '').replace(/\\/g, '/') === normalizedPath) return [];
+            if (n.children) return [{ ...n, children: removeFromTree(n.children) }];
+            return [n];
+          });
+
+        const items = state.tabs.items.filter((t) => t.id.replace(/\\/g, '/') !== normalizedPath);
+        const wasActive = state.tabs.activeId?.replace(/\\/g, '/') === normalizedPath;
+        const newActiveId = wasActive
+          ? items.length > 0 ? items[items.length - 1].id : null
+          : state.tabs.activeId;
+
+        const dirty = new Set(state.tabs.dirty);
+        dirty.delete(itemPath);
+
+        const fileContents = { ...state.fileContents };
+        delete fileContents[itemPath];
+
+        return {
+          workspace: { ...state.workspace, fileTree: removeFromTree(state.workspace.fileTree) },
+          tabs: { items, activeId: newActiveId, dirty },
+          fileContents,
+        };
+      });
+    } catch (e) {
+      console.error('Failed to delete item:', e);
+    }
+  },
+
+  newFile: () => set((state) => {
+    const count = state.tabs.items.filter((t) => t.id.startsWith('untitled:')).length + 1;
+    const id = `untitled:${count}`;
+    const tab: Tab = { id, name: `Untitled-${count}`, path: id, language: 'text', dirty: true };
+    const dirty = new Set(state.tabs.dirty);
+    dirty.add(id);
+    return {
+      tabs: { items: [...state.tabs.items, tab], activeId: id, dirty },
+      fileContents: { ...state.fileContents, [id]: '' },
+    };
+  }),
+
+  saveAll: async () => {
+    const state = useEditorStore.getState();
+    const dirtyPaths = [...state.tabs.dirty];
+    await Promise.all(dirtyPaths.map((p) => {
+      if (!p.startsWith('untitled:')) return state.saveFile(p);
+      return Promise.resolve();
+    }));
+  },
+
+  addRecentProject: (path: string) => set((state) => {
+    const filtered = state.recentProjects.filter((p) => p !== path);
+    const updated = [path, ...filtered].slice(0, 10);
+    localStorage.setItem('gost-recent-projects', JSON.stringify(updated));
+    return { recentProjects: updated };
+  }),
 }));

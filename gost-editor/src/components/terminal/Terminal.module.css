@@ -1,0 +1,33 @@
+.terminalContainer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.terminalXterm {
+  flex: 1;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.terminalXterm :global(.xterm) {
+  height: 100%;
+}
+
+.terminalXterm :global(.xterm-viewport) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-primary) transparent;
+}
+
+.terminalXterm :global(.xterm-viewport)::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminalXterm :global(.xterm-viewport)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminalXterm :global(.xterm-viewport)::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 3px;
+}

@@ -1,67 +1,55 @@
-import { useState } from 'react';
-import { ChevronRight, Plus, Columns, X } from 'lucide-react';
+import { Plus, Columns, X } from 'lucide-react';
 import CodeEditor from './CodeEditor';
 import Minimap from './Minimap';
 import styles from './EditorArea.module.css';
+import { useEditorStore } from '../../store/editorStore';
 
-interface Tab {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  modified: boolean;
-  active: boolean;
+const iconMap: Record<string, { bg: string; char: string }> = {
+  ts: { bg: '#3178c6', char: 'T' },
+  tsx: { bg: '#3178c6', char: 'T' },
+  js: { bg: '#f0db4f', char: 'J' },
+  jsx: { bg: '#f0db4f', char: 'J' },
+  go: { bg: '#00add8', char: 'G' },
+  html: { bg: '#e34c26', char: 'H' },
+  css: { bg: '#563d7c', char: '#' },
+  json: { bg: '#f0883e', char: '{' },
+  md: { bg: '#58a6ff', char: 'M' },
+  py: { bg: '#3776ab', char: 'P' },
+  rs: { bg: '#dea584', char: 'R' },
+  java: { bg: '#b07219', char: 'J' },
+  xml: { bg: '#0060ac', char: '<' },
+  yaml: { bg: '#6a6a8a', char: 'Y' },
+};
+
+function FileIcon({ name, lang }: { name: string; lang?: string }) {
+  const ext = name.split('.').pop()?.toLowerCase() || '';
+  const info = iconMap[ext] || iconMap[lang || ''] || { bg: 'var(--text-muted)', char: 'F' };
+  return (
+    <svg viewBox="0 0 24 24" width="12" height="12" fill={info.bg}>
+      <rect x="1" y="1" width="22" height="22" rx="2" />
+      <text x="12" y="17" textAnchor="middle" fill="#fff" fontSize="12" fontWeight="bold">{info.char}</text>
+    </svg>
+  );
 }
 
-const iconTs = (
-  <svg viewBox="0 0 24 24" width="12" height="12" fill="#3178c6">
-    <rect x="1" y="1" width="22" height="22" rx="2" />
-    <text x="12" y="17" textAnchor="middle" fill="#fff" fontSize="12" fontWeight="bold">T</text>
-  </svg>
-);
-
-const iconGo = (
-  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#00add8" strokeWidth="2">
-    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-    <polyline points="14 2 14 8 20 8" />
-  </svg>
-);
-
-const initialTabs: Tab[] = [
-  { id: 'main.go', name: 'main.go', icon: iconGo, modified: false, active: false },
-  { id: 'app.ts', name: 'app.ts', icon: iconTs, modified: true, active: true },
-  { id: 'template.ts', name: 'template.ts', icon: iconTs, modified: false, active: false },
-  { id: 'api.ts', name: 'api.ts', icon: iconTs, modified: true, active: false },
-];
-
 export default function EditorArea() {
-  const [tabs, setTabs] = useState<Tab[]>(initialTabs);
-
-  const closeTab = (id: string) => {
-    setTabs(tabs.filter(t => t.id !== id));
-  };
+  const tabs = useEditorStore((s) => s.tabs);
+  const setActiveTab = useEditorStore((s) => s.setActiveTab);
+  const closeTab = useEditorStore((s) => s.closeTab);
+  const dirtyCount = tabs.dirty.size;
 
   return (
     <>
-      <div className={styles.breadcrumbs}>
-        <span>my-app</span>
-        <ChevronRight size={9} className={styles.bcSep} />
-        <span>frontend</span>
-        <ChevronRight size={9} className={styles.bcSep} />
-        <span className={styles.bcCurrent}>app.ts</span>
-      </div>
-
       <div className={styles.tabsBar}>
-        {tabs.map((tab: Tab) => (
+        {tabs.items.map((tab) => (
           <div
             key={tab.id}
-            className={`${styles.tab} ${tab.active ? styles.active : ''}`}
-            onClick={() => {
-              setTabs(tabs.map(t => ({ ...t, active: t.id === tab.id })));
-            }}
+            className={`${styles.tab} ${tab.id === tabs.activeId ? styles.active : ''}`}
+            onClick={() => setActiveTab(tab.id)}
           >
-            <span className={styles.tabIcon}>{tab.icon}</span>
+            <span className={styles.tabIcon}><FileIcon name={tab.name} lang={tab.language} /></span>
             <span className={styles.tabName}>{tab.name}</span>
-            {tab.modified ? (
+            {tabs.dirty.has(tab.id) ? (
               <span className={styles.tabModified} />
             ) : (
               <span className={styles.tabSaved} />
@@ -78,10 +66,12 @@ export default function EditorArea() {
         <div className={styles.tabAdd} title="New Tab">
           <Plus size={12} />
         </div>
-        <div className={styles.unsavedIndicator} title="Save All (Ctrl+Shift+S)">
-          <svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="var(--yellow-accent)" /></svg>
-          2 unsaved
-        </div>
+        {dirtyCount > 0 && (
+          <div className={styles.unsavedIndicator} title="Save All (Ctrl+Shift+S)">
+            <svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="var(--yellow-accent)" /></svg>
+            {dirtyCount} unsaved
+          </div>
+        )}
         <div className={styles.tabOverflow}>
           <button title="Split Editor"><Columns size={11} /></button>
         </div>

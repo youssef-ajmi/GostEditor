@@ -26,6 +26,37 @@
       "csp": null
     }
   },
+  "plugins": {
+    "shell": {
+      "scope": [
+        {
+          "name": "terminal-shell",
+          "cmd": "cmd.exe",
+          "args": true
+        },
+        {
+          "name": "terminal-shell",
+          "cmd": "powershell.exe",
+          "args": true
+        },
+        {
+          "name": "terminal-shell",
+          "cmd": "bash",
+          "args": true
+        },
+        {
+          "name": "terminal-shell",
+          "cmd": "zsh",
+          "args": true
+        },
+        {
+          "name": "terminal-shell",
+          "cmd": "pwsh",
+          "args": true
+        }
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

@@ -9,6 +9,7 @@
   color: var(--text-muted);
   align-items: center;
   height: 26px;
+  user-select: none;
 }
 
 .statusLeft,
@@ -37,6 +38,31 @@
 .statusItem svg {
   width: 11px;
   height: 11px;
+}
+
+.statusToggle {
+  padding: 0 8px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.statusToggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.statusToggle.on {
+  color: var(--green-accent);
+}
+
+.statusToggle.off {
+  color: var(--text-dim);
 }
 
 .branchBadge {

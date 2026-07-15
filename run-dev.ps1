@@ -1,5 +1,5 @@
-$mingwBin = "C:\Users\youssef\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin"
-$env:Path = "$mingwBin;$env:PATH"
+$msvcBin = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64"
+$env:Path = "$msvcBin;$env:PATH"
 Set-Location D:\GostEditor\gost-editor
 npx tauri dev
 pause

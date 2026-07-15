@@ -8,49 +8,8 @@
   cursor: pointer;
 }
 
-.viewport {
-  position: absolute;
-  top: 8px;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: rgba(188, 140, 255, 0.08);
-  border: 1px solid rgba(188, 140, 255, 0.12);
-  border-radius: 2px;
-  transition: top 0.15s ease;
-}
-
-.lines {
-  padding: 8px 4px;
-}
-
-.miniLine {
-  height: 2px;
-  margin: 1.5px 6px;
-  border-radius: 1px;
-}
-
-.miniLine.code {
-  background: var(--text-dim);
-}
-
-.miniLine.keyword {
-  background: var(--red-accent);
-  opacity: 0.4;
-}
-
-.miniLine.string {
-  background: var(--blue-accent);
-  opacity: 0.3;
-}
-
-.miniLine.active {
-  background: var(--purple-accent);
-  opacity: 0.5;
-}
-
-.miniLine.empty {
-  background: transparent;
-  height: 4px;
-  margin: 0 6px;
+.minimap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }

@@ -1,12 +1,11 @@
 import { Bug, Plus, Columns, Eraser, ChevronUp, XCircle, AlertTriangle } from 'lucide-react';
+import { useEditorStore } from '../../store/editorStore';
+import TerminalPanel from '../terminal/Terminal';
 import styles from './RightPanel.module.css';
 
-const problems = [
-  { type: 'error' as const, message: "Property 'done' may not exist on type 'Todo'", file: 'app.ts:18', action: 'quick fix available' },
-  { type: 'warning' as const, message: "Variable 'filter' shadows built-in Array.filter", file: 'app.ts:13', action: 'rename variable' },
-];
-
 export default function RightPanel() {
+  const problems = useEditorStore((s) => s.problems);
+
   return (
     <>
       <div className={styles.rpSection}>
@@ -42,19 +41,23 @@ export default function RightPanel() {
         <div className={styles.rpTitle}>
           <Bug size={11} />
           Problems
-          <span className={styles.problemCount}>2</span>
+          {problems.length > 0 && <span className={styles.problemCount}>{problems.length}</span>}
         </div>
         <div className={styles.problemsList}>
-          {problems.map((p, i) => (
-            <div key={i} className={`${styles.problem} ${styles[p.type]}`}>
-              {p.type === 'error' && <XCircle size={12} />}
-              {p.type === 'warning' && <AlertTriangle size={12} />}
-              <div>
-                <div className={styles.problemText}>{p.message}</div>
-                <span className={styles.fileRef}>{p.file} · {p.action}</span>
+          {problems.length === 0 ? (
+            <div style={{ padding: '8px', color: 'var(--text-dim)', fontSize: '12px' }}>No problems detected</div>
+          ) : (
+            problems.map((p, i) => (
+              <div key={i} className={`${styles.problem} ${styles[p.type]}`}>
+                {p.type === 'error' && <XCircle size={12} />}
+                {p.type === 'warning' && <AlertTriangle size={12} />}
+                <div>
+                  <div className={styles.problemText}>{p.message}</div>
+                  <span className={styles.fileRef}>{p.file}:{p.line}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -72,12 +75,7 @@ export default function RightPanel() {
           </div>
         </div>
         <div className={styles.terminalBody}>
-          <div className={styles.termLine}><span className={styles.prompt}>$ </span><span className={styles.cmd}>gost build --watch</span></div>
-          <div className={styles.termLine}><span className={styles.infoText}>✓ Compiling frontend...</span></div>
-          <div className={styles.termLine}><span className={styles.success}>✓ Build completed in 1.2s</span></div>
-          <div className={styles.termLine}><span className={styles.infoText}>✓ Server running on http://localhost:3000</span></div>
-          <div className={styles.termLine} style={{ color: 'var(--text-dim)' }}>[Gost] watching for changes...</div>
-          <div className={styles.termLine}><span className={styles.prompt}>$ </span><span className={styles.cursor} /></div>
+          <TerminalPanel />
         </div>
       </div>
     </>
