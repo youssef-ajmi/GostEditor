@@ -222,8 +222,9 @@ export const useEditorStore = create<EditorStore>((set) => ({
       const ext = tab.path.split('.').pop()?.toLowerCase();
       if (ext === 'go') {
         try {
-          const { runShell } = await import('./editorCommands');
+          const { runShell, runGoVet } = await import('./editorCommands');
           await runShell('go', ['fmt', tab.path]);
+          await runGoVet(tab.path);
         } catch {}
       }
       if (ext === 'ts' || ext === 'tsx') {

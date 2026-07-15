@@ -14,7 +14,7 @@ import { go } from '@codemirror/lang-go';
 import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
 import { json } from '@codemirror/lang-json';
-import { setActiveEditorView } from '../../store/editorCommands';
+import { setActiveEditorView, vetDiagnostics } from '../../store/editorCommands';
 import { useEditorStore, Problem } from '../../store/editorStore';
 import styles from './CodeEditor.module.css';
 import emptyStyles from './EmptyEditor.module.css';
@@ -114,30 +114,35 @@ export default function CodeEditor() {
     const customLinter = linter((view) => {
       const diagnostics: Diagnostic[] = [];
       const problems: Problem[] = [];
+      if (activeId) {
+        const vd = vetDiagnostics.get(activeId);
+        if (vd) diagnostics.push(...vd);
+      }
       const tree = syntaxTree(view.state);
       const lang = activeTab?.language;
-      if (lang === 'go') return diagnostics;
-      tree.iterate({
-        enter: (node) => {
-          if (node.name === '⚠') {
-            const from = node.from;
-            const line = view.state.doc.lineAt(from);
-            const msg = view.state.sliceDoc(from, node.to);
-            diagnostics.push({
-              from,
-              to: node.to,
-              severity: 'error',
-              message: msg || 'Syntax error',
-            });
-            problems.push({
-              type: 'error',
-              message: msg || 'Syntax error',
-              file: activeId || '',
-              line: line.number,
-            });
-          }
-        },
-      });
+      if (lang !== 'go') {
+        tree.iterate({
+          enter: (node) => {
+            if (node.name === '⚠') {
+              const from = node.from;
+              const line = view.state.doc.lineAt(from);
+              const msg = view.state.sliceDoc(from, node.to);
+              diagnostics.push({
+                from,
+                to: node.to,
+                severity: 'error',
+                message: msg || 'Syntax error',
+              });
+              problems.push({
+                type: 'error',
+                message: msg || 'Syntax error',
+                file: activeId || '',
+                line: line.number,
+              });
+            }
+          },
+        });
+      }
       if (activeId) setProblems(problems);
       return diagnostics;
     });
