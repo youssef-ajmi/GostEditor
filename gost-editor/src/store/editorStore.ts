@@ -97,6 +97,8 @@ interface EditorStore {
   renameItem: (oldPath: string, newName: string) => Promise<void>;
   deleteItem: (itemPath: string) => Promise<void>;
   newFile: () => void;
+  newGostTemplate: (name: string) => void;
+  newGoTemplate: (name: string) => void;
   saveAll: () => Promise<void>;
   addRecentProject: (path: string) => void;
 }
@@ -106,11 +108,8 @@ function getFileExt(path: string) {
 }
 
 const langFromExt: Record<string, string> = {
-  ts: 'typescript', tsx: 'tsx', js: 'javascript', jsx: 'jsx',
-  go: 'go', html: 'html', css: 'css', json: 'json',
-  md: 'markdown', py: 'python', rs: 'rust', java: 'java',
-  kt: 'kotlin', xml: 'xml', yaml: 'yaml', yml: 'yaml', sql: 'sql',
-  sh: 'shell', mod: 'go', sum: 'go',
+  ts: 'typescript', tsx: 'tsx', go: 'go', mod: 'go', sum: 'go',
+  html: 'html', css: 'css', json: 'json',
 };
 
 export const useEditorStore = create<EditorStore>((set) => ({
@@ -184,8 +183,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
   openFile: async (filePath: string, fileName: string) => {
     const content = await invoke<string>('read_file', { path: filePath });
     const ext = fileName.split('.').pop()?.toLowerCase() || '';
-    const langMap: Record<string, string> = { ts: 'typescript', tsx: 'tsx', js: 'javascript', jsx: 'jsx', go: 'go', html: 'html', css: 'css', json: 'json', md: 'markdown', py: 'python', rs: 'rust', java: 'java', kt: 'kotlin', xml: 'xml', yaml: 'yaml', yml: 'yaml', sql: 'sql', sh: 'shell', mod: 'go', sum: 'go' };
-    const language = langMap[ext] || 'text';
+    const language = langFromExt[ext] || 'text';
     const tab: Tab = { id: filePath, name: fileName, path: filePath, language, dirty: false };
     set((state) => {
       const exists = state.tabs.items.find((t) => t.id === filePath);
@@ -205,6 +203,22 @@ export const useEditorStore = create<EditorStore>((set) => ({
     const state = useEditorStore.getState();
     const content = state.fileContents[filePath];
     if (!content) return;
+    const tab = state.tabs.items.find((t) => t.id === filePath);
+    if (tab) {
+      const ext = tab.path.split('.').pop()?.toLowerCase();
+      if (ext === 'go') {
+        try {
+          const { runShell } = await import('./editorCommands');
+          await runShell('go', ['fmt', tab.path]);
+        } catch {}
+      }
+      if (ext === 'ts' || ext === 'tsx') {
+        try {
+          const { runShell } = await import('./editorCommands');
+          await runShell('npx', ['prettier', '--write', tab.path]);
+        } catch {}
+      }
+    }
     await invoke('write_file', { path: filePath, content });
     set((state) => {
       const dirty = new Set(state.tabs.dirty);
@@ -223,7 +237,13 @@ export const useEditorStore = create<EditorStore>((set) => ({
     const newPath = await save({
       title: 'Save File As',
       defaultPath: currentTab?.name,
-      filters: [{ name: 'All Files', extensions: ['*'] }],
+      filters: [
+        { name: 'TypeScript', extensions: ['ts', 'tsx'] },
+        { name: 'Go', extensions: ['go', 'mod', 'sum'] },
+        { name: 'HTML', extensions: ['html', 'htm'] },
+        { name: 'CSS', extensions: ['css'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
     });
     if (!newPath) return;
 
@@ -490,6 +510,38 @@ export const useEditorStore = create<EditorStore>((set) => ({
     return {
       tabs: { items: [...state.tabs.items, tab], activeId: id, dirty },
       fileContents: { ...state.fileContents, [id]: '' },
+    };
+  }),
+
+  newGostTemplate: (name: string) => set((state) => {
+    const tsContent = `// ${name}.ts\n// Gost component\n\nexport function ${name}() {\n  return \`<div class="${name.toLowerCase()}">\n    <h1>${name}</h1>\n  </div>\`;\n}\n`;
+    const htmlContent = `<!-- ${name}.html -->\n<div class="${name.toLowerCase()}">\n  <h1>${name}</h1>\n</div>\n`;
+    const cssContent = `/* ${name}.css */\n.${name.toLowerCase()} {\n  padding: 1rem;\n}\n`;
+    const dirty = new Set(state.tabs.dirty);
+    const items = [...state.tabs.items];
+    const fileContents = { ...state.fileContents };
+    let count = state.tabs.items.filter((t) => t.id.startsWith('untitled:')).length + 1;
+    for (const [filename, content] of [['.ts', tsContent], ['.html', htmlContent], ['.css', cssContent]] as const) {
+      const id = `untitled:${count}`;
+      const tab: Tab = { id, name: `${name}${filename}`, path: id, language: filename.slice(1), dirty: true };
+      items.push(tab);
+      dirty.add(id);
+      fileContents[id] = content;
+      count++;
+    }
+    return { tabs: { items, activeId: items[items.length - 1]?.id ?? null, dirty }, fileContents };
+  }),
+
+  newGoTemplate: (name: string) => set((state) => {
+    const content = `package ${name.toLowerCase()}\n\nfunc New() string {\n  return "${name}"\n}\n`;
+    const count = state.tabs.items.filter((t) => t.id.startsWith('untitled:')).length + 1;
+    const id = `untitled:${count}`;
+    const tab: Tab = { id, name: `${name}.go`, path: id, language: 'go', dirty: true };
+    const dirty = new Set(state.tabs.dirty);
+    dirty.add(id);
+    return {
+      tabs: { items: [...state.tabs.items, tab], activeId: id, dirty },
+      fileContents: { ...state.fileContents, [id]: content },
     };
   }),
 

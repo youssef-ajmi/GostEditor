@@ -1,21 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  FileCode, Pen, Eye, Navigation, Code, Terminal, Wrench, Puzzle, HelpCircle,
+  FileCode, Pen, Eye, Navigation, Code as CodeIcon, Terminal, Wrench, Puzzle, HelpCircle,
   ChevronDown, ChevronRight, FolderOpen, File, History, Save, ToggleLeft, X,
-  Undo, Redo, Scissors, Copy, Clipboard, Search
+  Undo, Redo, Scissors, Copy, Clipboard, Search, Play, Check, FileType
 } from 'lucide-react';
 import styles from './MenuBar.module.css';
 import { openFolder, openRecentFolder } from '../../store/openFolder';
 import { openFileDialog } from '../../store/openFile';
 import { useEditorStore } from '../../store/editorStore';
-import { executeEditorAction } from '../../store/editorCommands';
+import { executeEditorAction, runShell } from '../../store/editorCommands';
 
 const menus = [
   { icon: FileCode, label: 'File' },
   { icon: Pen, label: 'Edit' },
   { icon: Eye, label: 'View' },
   { icon: Navigation, label: 'Navigate' },
-  { icon: Code, label: 'Code' },
+  { icon: CodeIcon, label: 'Code' },
   { icon: Terminal, label: 'Terminal' },
   { icon: Wrench, label: 'Tools' },
   { icon: Puzzle, label: 'Plugins' },
@@ -46,6 +46,7 @@ export default function MenuBar() {
   const newWindow = useEditorStore((s) => s.newWindow);
   const closeWindow = useEditorStore((s) => s.closeWindow);
   const setSettings = useEditorStore((s) => s.setSettings);
+
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -79,6 +80,18 @@ export default function MenuBar() {
     { icon: ToggleLeft, label: 'Auto Save', type: 'toggle', checked: autoSave, action: () => { setSettings({ autoSave: !autoSave }); close(); } },
     { type: 'separator' },
     { icon: X, label: 'Close Window', action: () => { closeWindow(); close(); } },
+  ];
+
+  const codeMenuItems: MenuItem[] = [
+    { icon: Play, label: 'Go Build', action: () => { runShell('go', ['build', './...']).then(r => console.log(r.stdout, r.stderr)); close(); } },
+    { icon: Play, label: 'Go Test', action: () => { runShell('go', ['test', './...']).then(r => console.log(r.stdout, r.stderr)); close(); } },
+    { icon: Play, label: 'Go Mod Tidy', action: () => { runShell('go', ['mod', 'tidy']).then(r => console.log(r.stdout, r.stderr)); close(); } },
+  ];
+
+  const toolsMenuItems: MenuItem[] = [
+    { icon: Check, label: 'TS Type Check', action: () => { runShell('npx', ['tsc', '--noEmit']).then(r => console.log(r.stdout, r.stderr)); close(); } },
+    { icon: FileType, label: 'New Gost Component', action: () => { const name = prompt('Component name:'); if (name) { useEditorStore.getState().newGostTemplate(name); } close(); } },
+    { icon: FileType, label: 'New Go Package', action: () => { const name = prompt('Package name:'); if (name) { useEditorStore.getState().newGoTemplate(name); } close(); } },
   ];
 
   const editMenuItems: MenuItem[] = [
@@ -165,6 +178,12 @@ export default function MenuBar() {
           )}
           {openMenu === menu.label && menu.label === 'Edit' && (
             <div className={styles.menuDropdown}>{renderItems(editMenuItems)}</div>
+          )}
+          {openMenu === menu.label && menu.label === 'Code' && (
+            <div className={styles.menuDropdown}>{renderItems(codeMenuItems)}</div>
+          )}
+          {openMenu === menu.label && menu.label === 'Tools' && (
+            <div className={styles.menuDropdown}>{renderItems(toolsMenuItems)}</div>
           )}
         </div>
       ))}

@@ -5,7 +5,13 @@ export async function openFileDialog() {
   const path = await open({
     multiple: false,
     title: 'Open File',
-    filters: [{ name: 'All Files', extensions: ['*'] }],
+    filters: [
+      { name: 'TypeScript', extensions: ['ts', 'tsx'] },
+      { name: 'Go', extensions: ['go', 'mod', 'sum'] },
+      { name: 'HTML', extensions: ['html', 'htm'] },
+      { name: 'CSS', extensions: ['css'] },
+      { name: 'All Files', extensions: ['*'] },
+    ],
   });
   if (!path) return;
 

@@ -7,18 +7,12 @@ import { useEditorStore } from '../../store/editorStore';
 const iconMap: Record<string, { bg: string; char: string }> = {
   ts: { bg: '#3178c6', char: 'T' },
   tsx: { bg: '#3178c6', char: 'T' },
-  js: { bg: '#f0db4f', char: 'J' },
-  jsx: { bg: '#f0db4f', char: 'J' },
   go: { bg: '#00add8', char: 'G' },
+  mod: { bg: '#00add8', char: 'G' },
+  sum: { bg: '#00add8', char: 'G' },
   html: { bg: '#e34c26', char: 'H' },
   css: { bg: '#563d7c', char: '#' },
   json: { bg: '#f0883e', char: '{' },
-  md: { bg: '#58a6ff', char: 'M' },
-  py: { bg: '#3776ab', char: 'P' },
-  rs: { bg: '#dea584', char: 'R' },
-  java: { bg: '#b07219', char: 'J' },
-  xml: { bg: '#0060ac', char: '<' },
-  yaml: { bg: '#6a6a8a', char: 'Y' },
 };
 
 function FileIcon({ name, lang }: { name: string; lang?: string }) {

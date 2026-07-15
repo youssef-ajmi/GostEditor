@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, FileCode, Cog, Terminal, FolderOpen, Save, X, Sidebar, PanelRight, Plus, SunMoon } from 'lucide-react';
+import { Search, FileCode, Cog, Terminal, FolderOpen, Save, X, Sidebar, PanelRight, Plus, SunMoon, FileType, Play, Check } from 'lucide-react';
 import styles from './CommandPalette.module.css';
 import { useEditorStore, FileNode } from '../../store/editorStore';
 
@@ -31,10 +31,9 @@ function flattenTree(nodes: FileNode[], prefix = ''): FileItem[] {
     const subtitle = prefix;
     const ext = node.name.split('.').pop()?.toLowerCase() || '';
     const colorMap: Record<string, string> = {
-      ts: '#3178c6', tsx: '#3178c6', js: '#f0db4f', jsx: '#f0db4f',
-      go: '#00add8', html: '#e34c26', css: '#563d7c', json: '#f0883e',
-      md: '#58a6ff', py: '#3776ab', rs: '#dea584', java: '#b07219',
-      xml: '#0060ac', yaml: '#6a6a8a', sql: '#e38c00',
+      ts: '#3178c6', tsx: '#3178c6',
+      go: '#00add8', mod: '#00add8', sum: '#00add8',
+      html: '#e34c26', css: '#563d7c', json: '#f0883e',
     };
     const color = colorMap[ext] || 'var(--text-muted)';
     if (node.type === 'file' && node.path) {
@@ -57,7 +56,7 @@ export default function CommandPalette() {
 
   const fileItems = useMemo(() => flattenTree(fileTree), [fileTree]);
 
-  const actionItems: ActionItem[] = [
+  const actionItems: (ActionItem | Sep)[] = [
     { type: 'action', icon: Plus, label: 'New File', shortcut: 'Ctrl+N', action: () => store().newFile() },
     { type: 'action', icon: Save, label: 'Save', shortcut: 'Ctrl+S', action: () => { const s = store(); if (s.tabs.activeId) s.saveFile(s.tabs.activeId).catch(console.error); } },
     { type: 'action', icon: Save, label: 'Save All', shortcut: 'Ctrl+Shift+S', action: () => store().saveAll().catch(console.error) },
@@ -67,6 +66,14 @@ export default function CommandPalette() {
     { type: 'action', icon: PanelRight, label: 'Toggle Right Panel', shortcut: '', action: () => store().toggleRight() },
     { type: 'action', icon: Terminal, label: 'Toggle Terminal', shortcut: 'Ctrl+`', action: () => store().setRightOpen(!store().panels.rightOpen) },
     { type: 'action', icon: SunMoon, label: 'Toggle Theme', shortcut: '', action: () => store().toggleTheme() },
+    { type: 'sep' },
+    { type: 'action', icon: FileType, label: 'New Gost Component', shortcut: '', action: () => { const name = prompt('Component name:'); if (name) store().newGostTemplate(name); } },
+    { type: 'action', icon: FileType, label: 'New Go Package', shortcut: '', action: () => { const name = prompt('Package name:'); if (name) store().newGoTemplate(name); } },
+    { type: 'sep' },
+    { type: 'action', icon: Play, label: 'Go Build', shortcut: '', action: async () => { const { runShell } = await import('../../store/editorCommands'); const res = await runShell('go', ['build', './...']); console.log(res.stdout, res.stderr); } },
+    { type: 'action', icon: Play, label: 'Go Test', shortcut: '', action: async () => { const { runShell } = await import('../../store/editorCommands'); const res = await runShell('go', ['test', './...']); console.log(res.stdout, res.stderr); } },
+    { type: 'action', icon: Play, label: 'Go Mod Tidy', shortcut: '', action: async () => { const { runShell } = await import('../../store/editorCommands'); const res = await runShell('go', ['mod', 'tidy']); console.log(res.stdout, res.stderr); } },
+    { type: 'action', icon: Check, label: 'TS Type Check', shortcut: '', action: async () => { const { runShell } = await import('../../store/editorCommands'); const res = await runShell('npx', ['tsc', '--noEmit']); console.log(res.stdout, res.stderr); } },
   ];
 
   const allItems: CommandItem[] = [

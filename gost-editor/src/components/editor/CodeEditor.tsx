@@ -14,13 +14,6 @@ import { go } from '@codemirror/lang-go';
 import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
 import { json } from '@codemirror/lang-json';
-import { markdown } from '@codemirror/lang-markdown';
-import { python } from '@codemirror/lang-python';
-import { rust } from '@codemirror/lang-rust';
-import { java } from '@codemirror/lang-java';
-import { xml } from '@codemirror/lang-xml';
-import { yaml } from '@codemirror/lang-yaml';
-import { sql } from '@codemirror/lang-sql';
 import { setActiveEditorView } from '../../store/editorCommands';
 import { useEditorStore, Problem } from '../../store/editorStore';
 import styles from './CodeEditor.module.css';
@@ -82,13 +75,6 @@ const langExtensions: Record<string, () => import('@codemirror/language').Langua
   html: () => html(),
   css: () => css(),
   json: () => json(),
-  markdown: () => markdown(),
-  python: () => python(),
-  rust: () => rust(),
-  java: () => java(),
-  xml: () => xml(),
-  yaml: () => yaml(),
-  sql: () => sql(),
 };
 
 const SAVE_DELAY = 800;

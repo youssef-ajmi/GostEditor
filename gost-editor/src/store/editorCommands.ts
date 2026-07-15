@@ -1,6 +1,7 @@
 import { EditorView } from '@codemirror/view';
 import { selectAll, undo, redo } from '@codemirror/commands';
 import { openSearchPanel } from '@codemirror/search';
+import { Command } from '@tauri-apps/plugin-shell';
 
 export let activeView: EditorView | null = null;
 
@@ -8,14 +9,24 @@ export function setActiveEditorView(view: EditorView | null) {
   activeView = view;
 }
 
+export async function runShell(cmd: string, args: string[]): Promise<{ stdout: string; stderr: string; code: number }> {
+  const shellCmd = navigator.platform.includes('Win') ? 'cmd.exe' : 'bash';
+  const winArgs = navigator.platform.includes('Win') ? ['/C', cmd, ...args] : ['-c', `${cmd} ${args.join(' ')}`];
+  try {
+    const result = await Command.create(shellCmd, winArgs).execute();
+    return { stdout: result.stdout || '', stderr: result.stderr || '', code: result.code || 0 };
+  } catch (e) {
+    return { stdout: '', stderr: String(e), code: 1 };
+  }
+}
+
 export function executeEditorAction(action: string) {
-  if (!activeView) return;
   switch (action) {
     case 'undo':
-      undo(activeView);
+      if (activeView) undo(activeView);
       break;
     case 'redo':
-      redo(activeView);
+      if (activeView) redo(activeView);
       break;
     case 'copy':
       document.execCommand('copy');
@@ -29,10 +40,10 @@ export function executeEditorAction(action: string) {
       });
       break;
     case 'selectAll':
-      selectAll(activeView);
+      if (activeView) selectAll(activeView);
       break;
     case 'find':
-      openSearchPanel(activeView);
+      if (activeView) openSearchPanel(activeView);
       break;
   }
 }
