@@ -233,5 +233,13 @@ export default function CodeEditor() {
     );
   }
 
+  if (activeTab.language === 'image') {
+    return (
+      <div className={styles.imageViewer}>
+        <img src={fileContent} alt={activeTab.name} className={styles.imageViewerImg} />
+      </div>
+    );
+  }
+
   return <div className={styles.editor} ref={editorRef} data-editor-area onContextMenu={(e) => e.preventDefault()} />;
 }

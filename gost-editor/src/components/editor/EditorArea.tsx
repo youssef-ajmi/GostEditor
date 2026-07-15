@@ -13,6 +13,14 @@ const iconMap: Record<string, { bg: string; char: string }> = {
   html: { bg: '#e34c26', char: 'H' },
   css: { bg: '#563d7c', char: '#' },
   json: { bg: '#f0883e', char: '{' },
+  png: { bg: '#4fb6d4', char: 'I' },
+  jpg: { bg: '#4fb6d4', char: 'I' },
+  jpeg: { bg: '#4fb6d4', char: 'I' },
+  gif: { bg: '#4fb6d4', char: 'I' },
+  svg: { bg: '#4fb6d4', char: 'I' },
+  webp: { bg: '#4fb6d4', char: 'I' },
+  ico: { bg: '#4fb6d4', char: 'I' },
+  bmp: { bg: '#4fb6d4', char: 'I' },
 };
 
 function FileIcon({ name, lang }: { name: string; lang?: string }) {

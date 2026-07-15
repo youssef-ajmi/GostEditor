@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronRight, Folder, FolderOpen, FileCode, FileJson, FolderPlus, FilePlus, Trash, Edit3, Clipboard } from 'lucide-react';
+import { ChevronRight, Folder, FolderOpen, FileCode, FileJson, FolderPlus, FilePlus, Trash, Edit3, Clipboard, Image } from 'lucide-react';
 import styles from './FileTree.module.css';
 import { useEditorStore, FileNode } from '../../store/editorStore';
 import { openFolder } from '../../store/openFolder';
@@ -13,6 +13,14 @@ const iconsMap: Record<string, React.ReactNode> = {
   html: <FileCode size={14} style={{ color: '#e34c26' }} />,
   css: <FileCode size={14} style={{ color: '#563d7c' }} />,
   json: <FileJson size={14} style={{ color: '#f0883e' }} />,
+  png: <Image size={14} style={{ color: '#4fb6d4' }} />,
+  jpg: <Image size={14} style={{ color: '#4fb6d4' }} />,
+  jpeg: <Image size={14} style={{ color: '#4fb6d4' }} />,
+  gif: <Image size={14} style={{ color: '#4fb6d4' }} />,
+  svg: <Image size={14} style={{ color: '#4fb6d4' }} />,
+  webp: <Image size={14} style={{ color: '#4fb6d4' }} />,
+  ico: <Image size={14} style={{ color: '#4fb6d4' }} />,
+  bmp: <Image size={14} style={{ color: '#4fb6d4' }} />,
   file: <FileCode size={14} style={{ color: 'var(--text-muted)' }} />,
 };
 

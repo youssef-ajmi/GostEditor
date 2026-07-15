@@ -10,6 +10,7 @@ export async function openFileDialog() {
       { name: 'Go', extensions: ['go', 'mod', 'sum'] },
       { name: 'HTML', extensions: ['html', 'htm'] },
       { name: 'CSS', extensions: ['css'] },
+      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp'] },
       { name: 'All Files', extensions: ['*'] },
     ],
   });

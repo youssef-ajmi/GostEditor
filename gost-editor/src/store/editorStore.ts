@@ -108,8 +108,15 @@ function getFileExt(path: string) {
 }
 
 const langFromExt: Record<string, string> = {
-  ts: 'typescript', tsx: 'tsx', go: 'go', mod: 'go', sum: 'go',
+  ts: 'typescript', tsx: 'tsx', go: 'go', mod: 'text', sum: 'text',
   html: 'html', css: 'css', json: 'json',
+  png: 'image', jpg: 'image', jpeg: 'image', gif: 'image', bmp: 'image',
+  ico: 'image', svg: 'image', webp: 'image',
+};
+
+const imageMime: Record<string, string> = {
+  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
+  bmp: 'image/bmp', ico: 'image/x-icon', svg: 'image/svg+xml', webp: 'image/webp',
 };
 
 export const useEditorStore = create<EditorStore>((set) => ({
@@ -181,9 +188,16 @@ export const useEditorStore = create<EditorStore>((set) => ({
   },
 
   openFile: async (filePath: string, fileName: string) => {
-    const content = await invoke<string>('read_file', { path: filePath });
     const ext = fileName.split('.').pop()?.toLowerCase() || '';
     const language = langFromExt[ext] || 'text';
+    let content: string;
+    if (language === 'image') {
+      const b64 = await invoke<string>('read_file_base64', { path: filePath });
+      const mime = imageMime[ext] || 'image/png';
+      content = `data:${mime};base64,${b64}`;
+    } else {
+      content = await invoke<string>('read_file', { path: filePath });
+    }
     const tab: Tab = { id: filePath, name: fileName, path: filePath, language, dirty: false };
     set((state) => {
       const exists = state.tabs.items.find((t) => t.id === filePath);

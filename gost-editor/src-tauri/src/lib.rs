@@ -51,6 +51,12 @@ fn read_file(path: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn read_file_base64(path: String) -> Result<String, String> {
+    let data = fs::read(&path).map_err(|e| e.to_string())?;
+    Ok(base64::Engine::encode(&base64::engine::general_purpose::STANDARD, data))
+}
+
+#[tauri::command]
 fn write_file(path: String, content: String) -> Result<(), String> {
     fs::write(&path, &content).map_err(|e| e.to_string())
 }
@@ -191,6 +197,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             list_dir,
             read_file,
+            read_file_base64,
             write_file,
             open_workspace,
             get_git_branch,
