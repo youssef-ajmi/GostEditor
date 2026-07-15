@@ -54,14 +54,15 @@ export function executeEditorAction(action: string) {
 
 export const vetDiagnostics = new Map<string, Diagnostic[]>();
 
-export async function runGoVet(filePath: string): Promise<void> {
+export async function runGoCheck(filePath: string): Promise<void> {
   const dir = filePath.split('\\').slice(0, -1).join('\\');
   const fileName = filePath.split('\\').pop() || '';
   try {
-    const res = await runShell('go', ['vet', `./${fileName}`], dir);
+    const nullDev = navigator.platform.includes('Win') ? 'NUL' : '/dev/null';
+    const res = await runShell('go', ['build', '-o', nullDev, './...'], dir);
     const diags: Diagnostic[] = [];
     const problems: Problem[] = [];
-    const text = res.stderr || res.stdout || '';
+    const text = res.stderr || '';
     const lineRe = /^(.+?):(\d+):(\d+):\s*(.+)$/gm;
     let match: RegExpExecArray | null;
     while ((match = lineRe.exec(text)) !== null) {
