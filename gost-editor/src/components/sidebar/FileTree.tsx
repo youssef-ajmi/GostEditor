@@ -44,22 +44,31 @@ function TreeItem({ node, depth = 0, onContextMenu }: { node: FileNode; depth?: 
       ? <FolderOpen size={14} style={{ color: 'var(--blue-accent)' }} />
       : <Folder size={14} style={{ color: 'var(--blue-accent)' }} />;
 
-    async function handleFolderClick() {
+    function handleFolderClick() {
       if (loadingRef.current) return;
-      if (!open && node.children && node.children.length === 0 && node.path) {
-        loadingRef.current = true;
-        setLoading(true);
-        try {
-          await expandDir(node.path);
-        } catch {}
-        if (!mountedRef.current) return;
-        setOpen(true);
-        setLoading(false);
-        loadingRef.current = false;
+      if (!open && node.path) {
+        if (node.children && node.children.length > 0) {
+          setOpen(true);
+        } else {
+          loadingRef.current = true;
+          setLoading(true);
+          expandDir(node.path).then(() => {
+            if (!mountedRef.current) return;
+            setOpen(true);
+            setLoading(false);
+            loadingRef.current = false;
+          }).catch(() => {
+            if (!mountedRef.current) return;
+            setLoading(false);
+            loadingRef.current = false;
+          });
+        }
       } else {
         setOpen(!open);
       }
     }
+
+    console.log('TreeItem folder render:', node.name, { open, hasChildren, childrenLen: node.children?.length, path: node.path }, node);
 
     return (
       <>

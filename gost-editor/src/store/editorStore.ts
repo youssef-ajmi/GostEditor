@@ -164,15 +164,18 @@ export const useEditorStore = create<EditorStore>((set) => ({
         children: e.is_dir ? [] : undefined,
       }));
       const normalized = folderPath.replace(/\\/g, '/');
+      let found = false;
       set((state) => {
         const replaceNode = (nodes: FileNode[]): FileNode[] =>
           nodes.map((n) => {
-            if ((n.path ?? '').replace(/\\/g, '/') === normalized) return { ...n, children };
+            const nNorm = (n.path ?? '').replace(/\\/g, '/');
+            if (nNorm === normalized) { found = true; return { ...n, children }; }
             if (n.children) return { ...n, children: replaceNode(n.children) };
             return n;
           });
         return { workspace: { ...state.workspace, fileTree: replaceNode(state.workspace.fileTree) } };
       });
+      if (!found) console.warn('expandDir: no node matched path', normalized, 'in fileTree');
     } catch (e) {
       console.error('Failed to expand directory:', folderPath, e);
     }

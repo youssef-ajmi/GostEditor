@@ -11,7 +11,16 @@
     "fs:write-all",
     "shell:default",
     "shell:allow-open",
-    "shell:allow-spawn",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        { "name": "cmd.exe", "cmd": "cmd.exe", "args": true },
+        { "name": "powershell.exe", "cmd": "powershell.exe", "args": true },
+        { "name": "bash", "cmd": "bash", "args": true },
+        { "name": "zsh", "cmd": "zsh", "args": true },
+        { "name": "pwsh", "cmd": "pwsh", "args": true }
+      ]
+    },
     "shell:allow-stdin-write",
     "shell:allow-kill",
     "core:window:allow-close",
